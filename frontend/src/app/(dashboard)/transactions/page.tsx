@@ -225,7 +225,13 @@ export default function TransactionsPage() {
     try {
       // Get auth header from Axios client interceptor setup
       const res = await axiosInstance.get(url, { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: res.headers['content-type'] });
+
+      const contentType =
+        typeof res.headers['content-type'] === 'string'
+          ? res.headers['content-type']
+          : 'application/octet-stream';
+
+      const blob = new Blob([res.data], { type: contentType });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
