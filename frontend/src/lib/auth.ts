@@ -1,6 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -9,19 +11,22 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
+
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
         try {
-          const res = await fetch('http://localhost:5000/api/auth/login', {
+          const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password
             }),
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/json'
+            }
           });
 
           const data = await res.json();
@@ -32,9 +37,12 @@ export const authOptions: NextAuthOptions = {
               name: data.data.name,
               email: data.data.email,
               role: data.data.role,
+              isBanned: data.data.isBanned,
               token: data.data.token
             };
           }
+
+          console.error('NextAuth login failed:', data);
           return null;
         } catch (error) {
           console.error('NextAuth authorize error:', error);
@@ -43,29 +51,39 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role;
+        token.isBanned = (user as any).isBanned;
         token.accessToken = (user as any).token;
       }
+
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).isBanned = token.isBanned;
       }
+
       (session as any).accessToken = token.accessToken;
+
       return session;
     }
   },
+
   pages: {
-    signIn: '/login',
+    signIn: '/login'
   },
+
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt'
   },
+
   secret: process.env.NEXTAUTH_SECRET || 'supersecretnextauthkeychangeinproduction'
 };
