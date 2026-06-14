@@ -34,6 +34,8 @@ import {
   Tag
 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 const transactionSchema = z.object({
   amount: z.coerce.number().positive('Số tiền phải là số dương'),
   type: z.enum(['income', 'expense'], { message: 'Loại giao dịch bắt buộc' }),
@@ -218,7 +220,7 @@ export default function TransactionsPage() {
     // Open in new tab or trigger direct download
     // NextAuth tokens are in headers, so for downloads it's easier to fetch or use a temp download mechanism.
     // Let's create an authorized fetch download helper:
-    downloadFile(`http://localhost:5000/api/reports/export?${params.toString()}`, `bao-cao-tai-chinh-${Date.now()}.${format}`);
+    downloadFile(`${API_URL}/reports/export?${params.toString()}`, `bao-cao-tai-chinh-${Date.now()}.${format}`);
   };
 
   const downloadFile = async (url: string, filename: string) => {
